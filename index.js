@@ -12,44 +12,56 @@ function tablaMultiplicar(num) {
 console.log("Ejercicio 1 --> Tabla del 3:", tablaMultiplicar(3));
 
 // Ejercicio 2
-// Pide números por prompt y los guarda en un array. Al meter un 0 deja de insertar.
+// Pide números por terminal y los guarda en un array. Al meter un 0 deja de insertar.
 // Por último ordena los números de menor a mayor y devuelve el array.
-// (prompt devuelve string, hay que convertirlo a entero con parseInt)
-function pedirNumeros() {
-    const numeros = [];
-    let numero = parseInt(prompt("Introduce un número (0 para terminar):"));
+// readline lo usamos para poder pedir datos por terminal. Al poner promises podemos usar await y no tener que usar callbacks.
+// Es obvio recalcar que stdin y stdout son la entrada y salida de la terminal, respectivamente. Se pueden renombrar como se quiera.
+// (la entrada de readline devuelve un string, hay que convertirlo a entero)
+const readline = require("node:readline/promises");
+const { stdin: entrada, stdout: salida } = require("node:process");
 
-    while (numero !== 0) {
-        numeros.push(numero);
-        numero = parseInt(prompt("Introduce un número (0 para terminar):"));
+// El uso de async es obligatorio para poder usar await.
+// createInterface crea un objeto que permite leer y escribir en la terminal.
+// asyncIterator permite usar un bucle while para leer línea a línea de la terminal.
+// Si intentas meter numeros decimales el programa los convertirá a enteros (parseInt) y si metes letras o símbolos te pedirá que metas un número entero.
+async function pedirNumeros() {
+    const numeros = [];
+    const terminal = readline.createInterface({ input: entrada, output: salida });
+    const lineas = terminal[Symbol.asyncIterator]();
+
+    try {
+        while (true) {
+            salida.write("Introduce un número (0 para terminar): ");
+            const { value: respuesta, done } = await lineas.next();
+            if (done) {
+                break;
+            }
+            const numero = parseInt(respuesta, 10);
+
+            if (Number.isNaN(numero)) {
+                console.log("Entrada no válida. Introduce un número entero.");
+                continue;
+            }
+            if (numero === 0) {
+                break;
+            }
+            numeros.push(numero);
+        }
+    } finally {
+        terminal.close();
     }
 
     numeros.sort((a, b) => a - b);
     return numeros;
 }
 
-// Para probarlo en el navegador: pedirNumeros();
-// console.log("Ejercicio 2 -->", pedirNumeros());
-
 // Ejercicio 3
-// Pide un año por prompt y escribe por consola si es bisiesto o no.
+// Recibe un año y escribe por consola si es bisiesto o no.
 // Bisiestos: múltiplos de 4, salvo los múltiplos de 100 (que NO lo son),
 // aunque los múltiplos de 400 sí lo son.
 function esBisiesto(anio) {
     return (anio % 4 === 0 && anio % 100 !== 0) || anio % 400 === 0;
 }
-
-function comprobarBisiesto() {
-    const anio = parseInt(prompt("Introduce un año:"));
-    if (esBisiesto(anio)) {
-        console.log(anio + " es bisiesto");
-    } else {
-        console.log(anio + " no es bisiesto");
-    }
-}
-
-// Para probarlo en el navegador: comprobarBisiesto();
-// console.log("Ejercicio 3 --> 2024:", esBisiesto(2024), "| 1900:", esBisiesto(1900), "| 2000:", esBisiesto(2000));
 
 // Ejercicio 4
 // Cuenta cuántas veces aparece un carácter en todas las palabras de un array.
@@ -68,4 +80,11 @@ function contarCaracteres(array, caracter) {
 }
 
 const data = ["yoda", "best", "has", "tortilla", "cAfe", "barrita tomate", "zumo"];
-console.log("Ejercicio 4 -->", contarCaracteres(data, "a"));
+
+async function main() {
+    console.log("Ejercicio 2 -->", await pedirNumeros());
+    console.log("Ejercicio 3 --> 2024:", esBisiesto(2024), "| 1900:", esBisiesto(1900), "| 2000:", esBisiesto(2000));
+    console.log("Ejercicio 4 -->", contarCaracteres(data, "o"));
+}
+
+main();
